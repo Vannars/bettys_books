@@ -2,7 +2,7 @@
 const express = require("express")
 const router = express.Router()
 const bcrypt = require('bcrypt')
-
+const {redirectLogin} = require('./redirectlogin') // make a cheeky redirectLogin function from the imported redirectlogin.js file
 
 router.get('/register', function (req, res, next) {
     res.render('register.ejs')                                                               
@@ -31,7 +31,8 @@ router.post('/loggedin', function (req, res, next) {
                 if (err) {
                     res.send ('Login failed');
                 } else if (result) {
-                    res.send('Login successful');
+                    req.session.userId = req.body.username;
+                    res.redirect('/');
                 } else {
                     res.send('Login failed');
                 }
@@ -40,7 +41,19 @@ router.post('/loggedin', function (req, res, next) {
     });                                                             
 });
 
-router.get('/list', function(req, res, next){
+// router to handle logout
+router.get('/logout', redirectLogin, (req,res) => {
+    req.session.destroy(err => {
+    if (err) {
+      return res.redirect('./')
+    }
+    res.send('you are now logged out. <a href='+'/'+'>Home</a>');
+    })
+})
+
+
+
+router.get('/list', redirectLogin, function(req, res, next){
     let sqlquery = "SELECT * FROM users" // query database to get all the users
     // execute sql query
     db.query(sqlquery, (err, result) => {

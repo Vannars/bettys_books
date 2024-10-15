@@ -5,6 +5,9 @@ var ejs = require('ejs')
 //Import mysql module
 var mysql = require('mysql2')
 
+//Import express-session module
+var session = require('express-session')
+const {redirectLogin} = require('./routes/redirectlogin')
 
 // Create the express application object
 const app = express()
@@ -34,6 +37,17 @@ db.connect((err) => {
     console.log('Connected to database')
 })
 global.db = db
+
+// Create session 
+// the secret paramater is used to create a session is (sign the cookie id with this secret)
+app.use(session({
+    secret: 'secret123',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        expires: 600000
+    }
+}))
 
 // Define our application-specific data
 app.locals.shopData = {shopName: "Bettys Books"}
