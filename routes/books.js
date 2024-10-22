@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const {redirectLogin} = require('./redirectlogin')
+const { check, validationResult} = require('express-validator')
 
 
 router.get('/search', redirectLogin, function(req, res, next){
@@ -35,8 +36,13 @@ router.get('/addbook', redirectLogin, function (req, res, next) {
     res.render('addbook.ejs')
 })
 
-router.post('/bookadded', redirectLogin, function (req, res, next) {
-    // saving data in database
+router.post('/bookadded', redirectLogin, [check('name').isLength({min: 1}), check('price').isNumeric()],
+ function (req, res, next) {
+    const errors  = (validaitionResult(req));  
+    if (!errors.isEmpty()){
+    res.redirect('./addbook')
+    } else {    
+     // saving data in database
     let sqlquery = "INSERT INTO books (name, price) VALUES (?,?)"
     // execute sql query
     let newrecord = [req.body.name, req.body.price]
@@ -47,7 +53,8 @@ router.post('/bookadded', redirectLogin, function (req, res, next) {
         else
             res.send(' This book is added to database, name: '+ req.body.name + ' price '+ req.body.price)
     })
-}) 
+ }
+}); 
 
 router.get('/bargainbooks', redirectLogin, function(req, res, next) {
     let sqlquery = "SELECT * FROM books WHERE price < 20"

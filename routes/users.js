@@ -3,6 +3,7 @@ const express = require("express")
 const router = express.Router()
 const bcrypt = require('bcrypt')
 const {redirectLogin} = require('./redirectlogin') // make a cheeky redirectLogin function from the imported redirectlogin.js file
+const { check, validationResult} = require('express-validator');
 
 router.get('/register', function (req, res, next) {
     res.render('register.ejs')                                                               
@@ -14,11 +15,18 @@ router.get('/login', function (req, res, next) {
     res.render('login.ejs')                                                               
 })
 // router to handle post request for login
-router.post('/loggedin', function (req, res, next) {
+router.post('/loggedin', 
+    check ('username').isAlphanumeric(), // check the username is alphanumeric
+    check ('password').isLength({min: 8}), // min password length is 8
+    function (req, res, next) {
+        const errors = validaitonResult(req);
+    if (!errors.isEmpty()) {
+        res.redirect('./login');
+    } else{
     // Query the database to get the hashed password from the users table
     let sqlquery = "SELECT hashedPassword FROM users WHERE username = ?"
     // Execute the SQL query taking the username from the request body
-    db.query(sqlquery, [req.body.username], function(err, result) {
+    db.query(sqlquery, [sanitizedUsername], function(err, result) {
         // Simple error handling
         if (err) return next(err);
         // If no results are returned, the user is not found
@@ -31,7 +39,7 @@ router.post('/loggedin', function (req, res, next) {
                 if (err) {
                     res.send ('Login failed');
                 } else if (result) {
-                    req.session.userId = req.body.username;
+                    req.session.userId = sanitizedUsername;
                     res.redirect('/');
                 } else {
                     res.send('Login failed');
@@ -39,7 +47,7 @@ router.post('/loggedin', function (req, res, next) {
             });
         }
     });                                                             
-});
+}});
 
 // router to handle logout
 router.get('/logout', redirectLogin, (req,res) => {
@@ -64,10 +72,23 @@ router.get('/list', redirectLogin, function(req, res, next){
         res.render("userlist.ejs", {availableUsers:result})
      })
 })
+// check: email is an email, password has at least 8 characters, first and last name a-z/A-Z, username is alphanumeric a-z/A-Z/0-9
+// errors cause a redirect to the register page
+router.post('/registered', [check('email').isEmail(), 
+     check('password').isLength({min:8})], 
 
-router.post('/registered', function (req, res, next) {
+    function (req, res, next) {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        res.redirect('./register')
+    } else {
     const saltRounds = 10;
+    // constants to sanitize the input
     const plainPassword = req.body.password
+    const sanitizedFirst = req.sanitize(req.body.first);
+    const sanitizedLast = req.sanitize(req.bodylast);
+    const sanitizedEmail = req.sanitize(req.body.email);
+    const sanitizedUsername = req.sanitize(req.body.username);
 
      // Hash the password
      bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
@@ -82,16 +103,16 @@ router.post('/registered', function (req, res, next) {
         let sqlquery = "INSERT INTO users (username, firstname, lastname, email, hashedPassword) VALUES (?,?,?,?,?)";
 
         // Execute SQL query
-        db.query(sqlquery, [req.body.username, req.body.first, req.body.last, req.body.email, hashedPassword], function(err, result) {
+        db.query(sqlquery, [sanitizedUsername, sanitizedFirst, sanitizedLast, sanitizedEmail, hashedPassword], function(err, result) {
             if (err) return next(err);
             console.log("1 record inserted");
             // Send a response
-            result = 'Hello ' + req.body.first + ' ' + req.body.last + ' you are now registered! We will send an email to you at ' + req.body.email;
+            result = 'Hello ' + sanitizedFirst + ' ' + sanitizedLast + ' you are now registered! We will send an email to you at ' + sanitizedEmail;
             result += ' Your password is: ' + req.body.password + ' and your hashed password is: ' + hashedPassword;
             res.send(result);
         });
      });
-    
+    };    
 });
 
 // Export the router object so index.js can access it

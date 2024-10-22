@@ -1,26 +1,29 @@
-// Import express and ejs
-var express = require ('express')
-var ejs = require('ejs')
+// Import express, ejs, express-validator, express-sanitizer, mysql, express-session 
+var express = require ('express');
+var ejs = require('ejs');
+var validator = require ('express-validator');
+const expressSanitizer = require('express-sanitizer');
 
 //Import mysql module
-var mysql = require('mysql2')
+var mysql = require('mysql2');
 
 //Import express-session module
-var session = require('express-session')
+var session = require('express-session');
 const {redirectLogin} = require('./routes/redirectlogin')
 
 // Create the express application object
-const app = express()
-const port = 8000
+const app = express();
+const port = 8000;
 
 // Tell Express that we want to use EJS as the templating engine
-app.set('view engine', 'ejs')
-
+app.set('view engine', 'ejs');
 // Set up the body parser 
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }));
 
 // Set up public folder (for css and statis js)
-app.use(express.static(__dirname + '/public'))
+app.use(express.static(__dirname + '/public'));
+// Set up the express-sanitizer
+app.use(expressSanitizer());
 
 // Define the database connection
 const db = mysql.createConnection ({
