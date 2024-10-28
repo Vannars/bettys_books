@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Weather Results for <%= city %></title>
+    <link rel="stylesheet" type="text/css" href="/main.css" />
+  </head>
+  <body>
+    <h1>Weather Results for <%= city %></h1>
+    <p>Region: <%= region %></p>
+    <p>City: <%= city %></p>
+    <p>Temperature: <%= temperature %>°C</p>
+    <p>Feels Like: <%= feels_like %>°C</p>
+    <p>Humidity: <%= humidity %>%</p>
+    <p>Skies: <%= description %></p>
+    <p><a href="/weather">Back</a></p>
+    <p><a href="users/logout">Logout</a></p>
+  </body>
+</html>
